@@ -1,0 +1,621 @@
+---
+title: "Análisis de Componentes Principales"
+author: "Química Cuántica"
+date: "2024-03-20"
+output:
+  pdf_document: default
+  html_document: default
+params:
+  data: Hogares_equipo.xlsx
+  n_pca1: 1
+  n_pca2: 2
+---
+
+# METODOS MULTIVARIADOS I.
+
+***Realizar un Análisis de Componentes Principales de los datos proporcionados:***
+
+***1) Análisis exploratorio de los datos contenidos en la base de datos. Para cada inciso deberá existir la evidencia estadística que permita corroborar las respuestas indicadas:***
+
+Para responder a las siguientes preguntas primero cargamos la tabla de excel en **R**
+
+```{r message=FALSE, warning=FALSE}
+library(readxl)
+datos <- read.csv("Red_828R_208D.csv")
+head(datos)
+colnames(datos)
+dim(datos)[2]
+```
+
+Selección de los descriptores de acuerdo a los filtros de Pearson:
+```{r}
+descriptor_filtro01_Red <- c('MaxEStateIndex', 'MinEStateIndex', 'MaxAbsEStateIndex', 'MinAbsEStateIndex', 'qed', 'MolWt', 'HeavyAtomMolWt', 'ExactMolWt', 'NumValenceElectrons', 'MaxPartialCharge', 'MinPartialCharge', 'MaxAbsPartialCharge', 'MinAbsPartialCharge', 'FpDensityMorgan1', 'FpDensityMorgan2', 'FpDensityMorgan3', 'BCUT2D_MWHI', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_CHGLO', 'BCUT2D_LOGPHI', 'BCUT2D_LOGPLOW', 'BCUT2D_MRHI', 'BCUT2D_MRLOW', 'BalabanJ', 'BertzCT', 'Chi0', 'Chi0n', 'Chi0v', 'Chi1', 'Chi1n', 'Chi1v', 'Chi2n', 'Chi2v', 'Chi3n', 'Chi3v', 'Chi4n', 'Chi4v', 'HallKierAlpha', 'Ipc', 'Kappa1', 'Kappa2', 'Kappa3', 'LabuteASA', 'PEOE_VSA1', 'PEOE_VSA10', 'PEOE_VSA11', 'PEOE_VSA12', 'PEOE_VSA13', 'PEOE_VSA14', 'PEOE_VSA2', 'PEOE_VSA3', 'PEOE_VSA4', 'PEOE_VSA5', 'PEOE_VSA6', 'PEOE_VSA7', 'PEOE_VSA8', 'PEOE_VSA9', 'SMR_VSA1', 'SMR_VSA10', 'SMR_VSA3', 'SMR_VSA5', 'SMR_VSA6', 'SMR_VSA7', 'SMR_VSA9', 'SlogP_VSA1', 'SlogP_VSA10', 'SlogP_VSA12', 'SlogP_VSA2', 'SlogP_VSA3', 'SlogP_VSA4', 'SlogP_VSA5', 'SlogP_VSA6', 'SlogP_VSA7', 'SlogP_VSA8', 'TPSA', 'EState_VSA1', 'EState_VSA10', 'EState_VSA2', 'EState_VSA3', 'EState_VSA4', 'EState_VSA5', 'EState_VSA6', 'EState_VSA7', 'EState_VSA8', 'EState_VSA9', 'VSA_EState1', 'VSA_EState10', 'VSA_EState2', 'VSA_EState3', 'VSA_EState4', 'VSA_EState5', 'VSA_EState6', 'VSA_EState7', 'VSA_EState8', 'VSA_EState9', 'FractionCSP3', 'HeavyAtomCount', 'NumHAcceptors', 'NumHeteroatoms', 'NumRotatableBonds', 'MolLogP', 'MolMR', 'fr_NH0', 'fr_alkyl_halide', 'fr_allylic_oxid', 'fr_halogen')
+#length(nombres_columnas)
+
+descriptor_filtro02_Red <- c('MaxEStateIndex', 'MinEStateIndex', 'MinAbsEStateIndex', 'qed', 'MolWt', 'NumValenceElectrons', 'MaxPartialCharge', 'MinPartialCharge', 'FpDensityMorgan1', 'BCUT2D_MWHI', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_CHGLO', 'BCUT2D_LOGPHI', 'BCUT2D_LOGPLOW', 'BCUT2D_MRHI', 'BCUT2D_MRLOW', 'BalabanJ', 'BertzCT', 'Chi0n', 'Chi0v', 'Chi1v', 'HallKierAlpha', 'Ipc', 'Kappa2', 'Kappa3', 'PEOE_VSA1', 'PEOE_VSA10', 'PEOE_VSA11', 'PEOE_VSA12', 'PEOE_VSA13', 'PEOE_VSA14', 'PEOE_VSA2', 'PEOE_VSA3', 'PEOE_VSA4', 'PEOE_VSA5', 'PEOE_VSA6', 'PEOE_VSA7', 'PEOE_VSA8', 'PEOE_VSA9', 'SMR_VSA10', 'SMR_VSA3', 'SMR_VSA5', 'SMR_VSA6', 'SMR_VSA7', 'SMR_VSA9', 'SlogP_VSA1', 'SlogP_VSA12', 'SlogP_VSA2', 'SlogP_VSA3', 'SlogP_VSA4', 'SlogP_VSA5', 'SlogP_VSA6', 'SlogP_VSA7', 'SlogP_VSA8', 'TPSA', 'EState_VSA2', 'EState_VSA3', 'EState_VSA4', 'EState_VSA5', 'EState_VSA6', 'EState_VSA7', 'EState_VSA8', 'EState_VSA9', 'VSA_EState10', 'VSA_EState2', 'VSA_EState3', 'VSA_EState4', 'VSA_EState5', 'VSA_EState6', 'VSA_EState7', 'VSA_EState8', 'VSA_EState9', 'FractionCSP3', 'NumHAcceptors', 'NumHeteroatoms', 'NumRotatableBonds', 'MolLogP', 'fr_NH0', 'fr_allylic_oxid')
+
+descriptor_filtro03_Red <- c( 'BalabanJ', 'BCUT2D_LOGPLOW', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI','PEOE_VSA1', 'SMR_VSA6', 'VSA_EState9', 'PEOE_VSA9', 'BCUT2D_LOGPHI','FractionCSP3', 'SlogP_VSA4', 'BCUT2D_MRLOW', 'SlogP_VSA2','SlogP_VSA8', 'VSA_EState6')
+
+descriptor_filtro03_Red_30 <- c( 'BalabanJ', 'BCUT2D_LOGPLOW', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'PEOE_VSA1', 'SMR_VSA6', 'VSA_EState9', 'PEOE_VSA9', 'BCUT2D_LOGPHI', 'FractionCSP3', 'SlogP_VSA4', 'BCUT2D_MRLOW', 'SlogP_VSA2', 'SlogP_VSA8', 'VSA_EState6', 'EState_VSA8', 'Chi0v', 'SMR_VSA9', 'EState_VSA5', 'SlogP_VSA1', 'BCUT2D_CHGLO', 'Chi0n', 'MolWt', 'HallKierAlpha', 'fr_allylic_oxid', 'NumRotatableBonds', 'SMR_VSA3', 'EState_VSA3', 'NumValenceElectrons', 'qed')
+
+descriptor_spearman_Red <-c('BCUT2D_LOGPLOW', 'BCUT2D_CHGHI', 'BCUT2D_MRLOW', 'SlogP_VSA8',
+       'BalabanJ', 'SMR_VSA3', 'SlogP_VSA1', 'PEOE_VSA12', 'PEOE_VSA1',
+       'PEOE_VSA9', 'qed', 'PEOE_VSA11', 'SlogP_VSA4', 'PEOE_VSA6',
+       'EState_VSA5', 'SMR_VSA6', 'SMR_VSA1', 'VSA_EState9', 'PEOE_VSA2',
+       'FractionCSP3', 'VSA_EState1', 'BCUT2D_MWLOW', 'fr_NH0',
+       'NumRotatableBonds', 'MaxPartialCharge', 'SMR_VSA10', 'VSA_EState4',
+       'NumHAcceptors', 'PEOE_VSA4', 'VSA_EState6')
+
+descriptor_kendall_Red <-c('BCUT2D_LOGPLOW', 'BCUT2D_CHGHI', 'SlogP_VSA8', 'BCUT2D_MRLOW',
+       'SMR_VSA3', 'PEOE_VSA12', 'SlogP_VSA1', 'BalabanJ', 'PEOE_VSA1',
+       'PEOE_VSA11', 'PEOE_VSA9', 'SlogP_VSA4', 'qed', 'EState_VSA5',
+       'SMR_VSA6', 'VSA_EState9', 'PEOE_VSA6', 'PEOE_VSA2', 'Chi4n',
+       'FractionCSP3', 'SMR_VSA1', 'VSA_EState1', 'fr_NH0',
+       'NumRotatableBonds', 'Chi4v', 'BCUT2D_MWLOW', 'VSA_EState4',
+       'SMR_VSA10', 'NumHAcceptors', 'MaxPartialCharge')
+
+descriptor_DC_Red<-c('MaxEStateIndex', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_LOGPHI',
+       'BCUT2D_LOGPLOW', 'BCUT2D_MRLOW', 'BalabanJ', 'Chi0v', 'Chi2n', 'Chi4n',
+       'Chi4v', 'PEOE_VSA1', 'PEOE_VSA9', 'SMR_VSA6', 'SMR_VSA9', 'SlogP_VSA2',
+       'SlogP_VSA4', 'SlogP_VSA8', 'EState_VSA8', 'VSA_EState6', 'VSA_EState9',
+       'FractionCSP3')
+
+
+```
+
+Pruebas KMO
+
+```{r}
+install.packages("psych")     
+library(psych)
+```
+
+```{r}
+#Filtro 1
+df <- datos[, descriptor_filtro03_Red_30]
+KMO(df)
+```
+
+
+```{r}
+nombres_columnas <- descriptor_spearman_Red#pearson_lambda_red 
+# Seleccionar las columnas del DataFrame basadas en los nombres de la lista
+ndata <- datos[, nombres_columnas]
+# Visualizar las columnas seleccionadas
+print(dim(ndata)[2])
+ndata
+```
+
+Grafica de cajas para descriptores 
+```{r}
+# Configurar diseño de múltiples gráficos
+par(mfrow=c(2,3))
+# Iterar sobre los nombres de las columnas y crear una gráfica de caja para cada una
+for (nombre_col in colnames(ndata[,])) { 
+  boxplot(ndata[[nombre_col]], main=nombre_col)
+}
+```
+
+Con el siguiente código en **R** extraemos las desviaciones estándar entre los valores reportados
+Calculo de la Desviación estándar de todos los descriptores:
+```{r}
+#Calculo de la Desviación estándar de todos los descriptores
+vector_desvest <- c()
+nombres <- colnames(ndata)
+tamano <- dim(ndata)[2]
+for (i in 1:tamano) {
+  desv <- sd(ndata[,i])
+  print(paste("Col", i, nombres[i], desv))
+  vector_desvest <- c(vector_desvest, desv)
+}
+analisis <- summary(vector_desvest)
+print(analisis)
+```
+
+***b. ¿Existen parámetros qmb***print(desv)re***ue presentan datos atípicos?***
+
+Para responder a esta pregunta usamos una gráfica de caja, para identificar datos atípicos o *outliers*, a continuación se presenta el código en **R**
+
+
+En estas gráficas vemos que los parámetros con datos atípicos u *outliers* son:
+
+\newpage
+
+***4) ¿Considera que los datos utilizados para el presente estudio son adecuados para realizar un Análisis de Componentes Principales? Justifique su respuesta con evidencia estadística verificable.***
+
+En este caso primero obtenemos la matriz de correlación de los datos y los gráficos de dispersión respectivos
+
+```{r message=FALSE, warning=FALSE}
+library("Hmisc")
+datos <- as.matrix(ndata[,])
+rcorr(datos)
+datos <- data.frame(datos)
+```
+
+A partir de los gráficos anteriores en este estudio los datos pueden usarse para realizar un *Análisis de Componentes Principales*, ya que la matriz de correlación nos indica que existen grupos de variables con correlaciones altas (en la mayoría de los casos son mayores a 0.5 los valores del coeficiente de correlación).
+```{r}
+install.packages("psych")     
+library(psych)
+```
+Prueba KMO para validar que la base de datos sea adecuada
+
+```{r message=FALSE, warning=FALSE}
+print(dim(ndata)[2])
+KMO(ndata)
+```
+
+Además, como los valores de la prueba **KMO** son mayores $0.7$ indican que el muestreo es adecuado para realizar un *Análisis de Componentes Principales*. \newpage
+
+***5) Utilizando la matriz de correlación, determine el número de componentes a ser considerados en el estudio si se empleara cada uno de los métodos enlistados: (justificar cada una de sus respuestas con evidencia verificable):***
+
+Primero definimos la matriz de correlación para obtener los valores y vectores propios
+
+```{r message=FALSE, warning=FALSE}
+datos_pca <- prcomp(ndata, center = TRUE, scale = TRUE) 
+#center = TRUE y scale = TRUE para utilizar la matriz de correlación
+
+#Despliega la media de las variables originales
+round(datos_pca$center,3)
+```
+
+Se despliega la desviación estándar de las variables originales
+```{r message=FALSE, warning=FALSE}
+round(datos_pca$scale,3)
+```
+
+Se muestra la desviación estándar, el porcentaje (en decimales) de 
+varianza explicada, y el porcentaje (en decimales) de la varianza
+acumulada para cada # uno de los componentes principales
+```{r message=FALSE, warning=FALSE}
+summary(datos_pca)
+```
+
+Cálculo de valores propios
+```{r message=FALSE, warning=FALSE}
+valores_propios_redondeados <- round(datos_pca$sdev^2,3)
+valores_propios_redondeados
+```
+
+Se despliega los vectores propios asociados a cada componente principal
+```{r message=FALSE, warning=FALSE}
+#Se despliega los vectores propios asociados a cada componente principal
+round(datos_pca$rotation,4)
+```
+
+Pesos o lodgings de acuerdo a la CP, en orden desendiente 
+```{r}
+round(sort(abs(datos_pca$rotation[, 1]), decreasing = TRUE), 4)
+```
+
+
+***a. El porcentaje de Variación Total Acumulada (al menos el 75%).***
+
+```{r message=FALSE, warning=FALSE}
+#Gráfico de variación acumulada
+pve <- datos_pca$sdev^2/sum(datos_pca$sdev^2)
+plot(cumsum(pve), xlab = "Componente principal", ylab = "Porción acumulada de la varianza explicada", 
+     ylim = c(0,1), type = 'b', col = "royalblue4")
+abline(h = 0.75, lty = 2, col = "red")
+```
+
+En esta gráfica de la variación total acumulada vemos que con la condición de al menos el $75\%$ (línea punteada roja), vemos que se requieren de dos componentes principales para superar el umbral.
+
+***b. El criterio de Kaiser.*** Para este criterio usamos el gráfico de sedimentación del siguiente inciso, donde se tiene que cumplir la condición de que los componentes principales cuyos valores propios sean mayores que uno son considerados.
+
+***c. El método gráfico.***
+
+```{r message=FALSE, warning=FALSE}
+#Gráfico de sedimentación (scree plot)
+plot(datos_pca$sdev^2, main = "Gráfico de sedimentación", ylab = "Valor propio", 
+     xlab = "Componente principal", type = "b", col = "royalblue4")
+abline(h = 1, lty = 2, col = "red")
+```
+
+En esta gráfica de sedimentación vemos que los componentes principales a considerar son aquellos que se encuentran antes del punto de inflexión más pronunciado en la curva. En particular en nuestro caso tenemos solamente dos componentes.
+
+Además, se aprecia que solamente hay dos puntos por encima de la cota $1$ (línea punteada roja) para la prueba de **Kaiser**.
+
+**Conclusión:** Los tres criterios son consistentes, ya que son dos componentes principales las que explican la mayor varianza.
+
+\newpage
+
+***6) El equipo decide trabajar con los dos primeros componentes. Realice la gráfica biplot para estos dos componentes e interprete lo que observa en ella:***
+
+Grafica bidimensional 
+```{r message=FALSE, warning=FALSE}
+library(devtools)
+install_github("vqv/ggbiplot")
+require(ggbiplot)
+ggbiplot(datos_pca, labels = rownames(data), obs.scale = 1, var.sacale = 1, labels.size = 2.5, 
+         varname.size = 2, varname.abbrev = TRUE)
+```
+
+```{r}
+# Instala y carga las librerías necesarias
+install.packages("scatterplot3d")
+library(scatterplot3d)
+install.packages("dplyr")
+library(dplyr)
+library(magrittr)
+library(plotly)
+
+```
+
+
+```{r}
+# Obtiene la matriz de carga de los componentes principales
+loadings <- datos_pca$rotation
+constante <- 35
+
+plot_3d <- plot_ly(x = datos_pca$x[, 1], y = datos_pca$x[, 2], z = datos_pca$x[, 3], 
+                   type = "scatter3d", mode = "markers",
+                   marker = list(color = "black", size = 3),
+                   text = rownames(datos_pca$x)) %>%
+  layout(scene = list(xaxis = list(title = "PC1"),
+                      yaxis = list(title = "PC2"),
+                      zaxis = list(title = "PC3"),
+                      aspectmode = "cube"),
+         title = "Gráfico de los tres primeros componentes principales (3D)")
+
+# Iterar sobre los descriptores y agregar los vectores correspondientes
+for (i in 1:ncol(loadings)) {
+  plot_3d <- plot_3d %>%
+    add_trace(x = c(0, loadings[i, 1]*constante), 
+              y = c(0, loadings[i, 2]*constante), 
+              z = c(0, loadings[i, 3]*constante),
+              type = "scatter3d",
+              mode = "line",
+              line = list(color = "red", width = 3),
+              name = paste(rownames(loadings)[i], i),
+              marker = list(symbol = "star", color = "red",width = 10))
+}
+
+# Mostrar el gráfico
+plot_3d
+```
+
+
+Buscando descriptores que coincidan en los N-Componente Principales y N-variables
+
+```{r}
+ncp <- 6
+print(paste("Numero de componentes principales:",ncp))
+varianza_acumulada <- summary(datos_pca)$importance[3,][ncp]
+print(paste("Varianza acumulada", varianza_acumulada))
+loadings <- datos_pca$rotation
+
+lista <- c()
+ntcp <- dim(datos_pca$rotation)[1]
+info_pesos <- array(NA, dim = c(ntcp, 2))
+j <- 0
+for (i in 1:ntcp){
+  total <- sum(abs(loadings[i, 1:ncp]))
+  des <- names(loadings[,i])[i]
+  #print(paste(des,":",total))
+  lista <- append(lista, total)
+  j = j + total
+  info_pesos[i,1] <- des
+  info_pesos[i,2] <- total
+}
+#print(j)
+#sort(lista, decreasing = TRUE)
+
+indices_ordenados <- order(info_pesos[, 2], decreasing = TRUE)
+
+# Indexar la matriz con los índices ordenados para reordenarla
+info_pesos_ordenada <- info_pesos[indices_ordenados, ]
+
+# Mostrar la matriz ordenada
+print(info_pesos_ordenada)
+```
+
+Buscando el umbral
+```{r}
+num_umbral<- summary(as.numeric(info_pesos_ordenada[, 2]))[2]
+print(paste("Umbral", num_umbral))
+filas_seleccionadas <- info_pesos_ordenada[info_pesos_ordenada[, 2] > num_umbral, ]
+
+# Imprimir solo el contenido de la primera columna de esas filas
+descriptores_seleccionados <- filas_seleccionadas[, 1]
+
+print(descriptores_seleccionados)
+```
+
+```{r}
+descriptores_pca_names <- descriptores_seleccionados
+#Descroptores que se escogieron en el modelo anterior
+descriptores_SRed_pearson <- c('BalabanJ', 'BCUT2D_LOGPLOW', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI','PEOE_VSA1', 'SMR_VSA6', 'VSA_EState9', 'PEOE_VSA9', 'BCUT2D_LOGPHI','FractionCSP3', 'SlogP_VSA4', 'BCUT2D_MRLOW', 'SlogP_VSA2','SlogP_VSA8', 'VSA_EState6')
+
+descriptores_SOx_pearson <- c( 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_LOGPLOW', 'BalabanJ','BCUT2D_LOGPHI', 'PEOE_VSA1', 'BCUT2D_CHGLO', 'SMR_VSA6','BCUT2D_MRLOW', 'VSA_EState9', 'PEOE_VSA9', 'FractionCSP3','PEOE_VSA13', 'SlogP_VSA8', 'SMR_VSA9')
+
+variables_comunes_pca_propio_SOx <- intersect(descriptores_SOx_pearson, descriptores_pca_names)
+variables_comunes_pca_propio_SRed <- intersect(descriptores_SRed_pearson, descriptores_pca_names)
+
+print(variables_comunes_pca_propio_SOx)
+print(length(variables_comunes_pca_propio_SOx))
+
+print(variables_comunes_pca_propio_SRed)
+print(length(variables_comunes_pca_propio_SRed))
+```
+
+Función de la regresión lineal 
+```{r}
+regresion_lineal_fun <- function(datos_reglin) {
+  colnames(datos_reglin)[1] <- "lambda_Red"
+  datos_reglin <- data.frame(datos_reglin)
+  print(datos_reglin)
+  
+  set.seed(123)  # Establecer semilla para reproducibilidad
+  
+  # Número total de filas 
+  n <- nrow(datos_reglin)
+  
+  # Crear un vector de índices de filas
+  indices <- sample(1:n, size = n * 0.8, replace = FALSE)  # 80% de los datos para entrenamiento
+  
+  # Dividir los datos en conjuntos de entrenamiento y prueba
+  training <- datos_reglin[indices, ]
+  test <- datos_reglin[-indices, ]
+  modelo <- lm(lambda_Red ~ ., data = training)
+  return(summary(modelo))
+}
+```
+Base de datos
+```{r}
+reg_datos <- datos[,4:ncol(datos)]
+reg_datos
+```
+
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], reg_datos[, descriptores_seleccionados])# descriptors de PCA con N-CP 
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+```{r}
+datos_reglin <- reg_datos # 208 Desc sin filtro
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], reg_datos[, descriptor_spearman_Red]) #Descriptores del filtro 2
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], data.frame(datos_pca$x[, 1:10])) # PCA. Cumple con la prueba KMO a partir de los 79 Descriptores
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+# Da muy mal el ajuste si utilizo los PCi como variables de ajuste
+```
+
+
+Seleccionando los descriptores para la RegLin multivariable
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], reg_datos[, variables_comunes_pca_propio_SRed]) #Intersección PCA y AC
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+
+
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], reg_datos[, kendall_des]) #Anlásis de correlaciones 15 más altamente correlacionados (Kendall)
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], reg_datos[, dist_corr]) #Anlásis de correlaciones (AC)
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+```{r}
+# MSE empleando los valores de Test
+predicciones <- predict(modelo, newdata = test)
+test_mse <- mean((predicciones - test$lambda_Red)^2)
+print(test_mse)
+```
+
+```{r}
+datos_reglin <- cbind(reg_datos[, 1], reg_datos[, pearson_lambda_red]) #Anlásis de correlaciones (AC)
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+
+PCA para lso smiles Ox:
+```{r}
+library(readxl)
+datos_Ox <- read.csv("Ox_828R_208D.csv")
+head(datos_Ox)
+colnames(datos_Ox)
+dim(datos_Ox)[2]
+```
+
+Lista de descriptores dependiendo de numero de filtro
+```{r}
+#filer01_Pearson
+#descriptors = c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'MaxEStateIndex', 'MinEStateIndex', 'MaxAbsEStateIndex', 'MinAbsEStateIndex', 'qed', 'MolWt', 'HeavyAtomMolWt', 'ExactMolWt', 'NumValenceElectrons', 'MaxPartialCharge', 'MinPartialCharge', 'MaxAbsPartialCharge', 'MinAbsPartialCharge', 'FpDensityMorgan1', 'FpDensityMorgan2', 'FpDensityMorgan3', 'BCUT2D_MWHI', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_CHGLO', 'BCUT2D_LOGPHI', 'BCUT2D_LOGPLOW', 'BCUT2D_MRHI', 'BCUT2D_MRLOW', 'BalabanJ', 'BertzCT', 'Chi0', 'Chi0n', 'Chi0v', 'Chi1', 'Chi1n', 'Chi1v', 'Chi2n', 'Chi2v', 'Chi3n', 'Chi3v', 'Chi4n', 'Chi4v', 'HallKierAlpha', 'Ipc', 'Kappa1', 'Kappa2', 'Kappa3', 'LabuteASA', 'PEOE_VSA1', 'PEOE_VSA10', 'PEOE_VSA11', 'PEOE_VSA12', 'PEOE_VSA13', 'PEOE_VSA14', 'PEOE_VSA2', 'PEOE_VSA3', 'PEOE_VSA4', 'PEOE_VSA5', 'PEOE_VSA6', 'PEOE_VSA7', 'PEOE_VSA8', 'PEOE_VSA9', 'SMR_VSA1', 'SMR_VSA10', 'SMR_VSA3', 'SMR_VSA5', 'SMR_VSA6', 'SMR_VSA7', 'SMR_VSA9', 'SlogP_VSA1', 'SlogP_VSA10', 'SlogP_VSA11', 'SlogP_VSA12', 'SlogP_VSA2', 'SlogP_VSA3', 'SlogP_VSA4', 'SlogP_VSA5', 'SlogP_VSA6', 'SlogP_VSA7', 'SlogP_VSA8', 'TPSA', 'EState_VSA1', 'EState_VSA10', 'EState_VSA2', 'EState_VSA3', 'EState_VSA4', 'EState_VSA5', 'EState_VSA6', 'EState_VSA7', 'EState_VSA8', 'EState_VSA9', 'VSA_EState1', 'VSA_EState10', 'VSA_EState2', 'VSA_EState3', 'VSA_EState4', 'VSA_EState5', 'VSA_EState6', 'VSA_EState7', 'VSA_EState8', 'VSA_EState9', 'FractionCSP3', 'HeavyAtomCount', 'NumHAcceptors', 'NumHeteroatoms', 'NumRotatableBonds', 'MolLogP', 'MolMR', 'fr_NH0', 'fr_alkyl_halide', 'fr_halogen')
+
+#filtro02_pearson
+#descriptors = c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'MaxEStateIndex', 'MinEStateIndex', 'MinAbsEStateIndex', 'qed', 'MolWt', 'NumValenceElectrons', 'MaxPartialCharge', 'MinPartialCharge', 'MinAbsPartialCharge', 'FpDensityMorgan1', 'BCUT2D_MWHI', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_CHGLO', 'BCUT2D_LOGPHI', 'BCUT2D_LOGPLOW', 'BCUT2D_MRHI', 'BCUT2D_MRLOW', 'BalabanJ', 'BertzCT', 'Chi0n', 'Chi0v', 'Chi1v', 'HallKierAlpha', 'Ipc', 'Kappa2', 'Kappa3', 'PEOE_VSA1', 'PEOE_VSA10', 'PEOE_VSA11', 'PEOE_VSA12', 'PEOE_VSA13', 'PEOE_VSA14', 'PEOE_VSA2', 'PEOE_VSA3', 'PEOE_VSA4', 'PEOE_VSA5', 'PEOE_VSA6', 'PEOE_VSA7', 'PEOE_VSA8', 'PEOE_VSA9', 'SMR_VSA1', 'SMR_VSA10', 'SMR_VSA3', 'SMR_VSA5', 'SMR_VSA6', 'SMR_VSA7', 'SMR_VSA9', 'SlogP_VSA1', 'SlogP_VSA11', 'SlogP_VSA12', 'SlogP_VSA2', 'SlogP_VSA3', 'SlogP_VSA4', 'SlogP_VSA5', 'SlogP_VSA6', 'SlogP_VSA7', 'SlogP_VSA8', 'TPSA', 'EState_VSA2', 'EState_VSA3', 'EState_VSA4', 'EState_VSA5', 'EState_VSA6', 'EState_VSA7', 'EState_VSA8', 'EState_VSA9', 'VSA_EState10', 'VSA_EState2', 'VSA_EState3', 'VSA_EState4', 'VSA_EState5', 'VSA_EState6', 'VSA_EState7', 'VSA_EState8', 'VSA_EState9', 'FractionCSP3', 'NumHAcceptors', 'NumHeteroatoms', 'NumRotatableBonds', 'MolLogP', 'fr_NH0')
+
+#filtro03_pearson
+#descriptors = c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_LOGPLOW', 'BalabanJ','BCUT2D_LOGPHI', 'PEOE_VSA1', 'BCUT2D_CHGLO', 'SMR_VSA6','BCUT2D_MRLOW', 'VSA_EState9', 'PEOE_VSA9', 'FractionCSP3','PEOE_VSA13', 'SlogP_VSA8', 'SMR_VSA9')
+
+#30_pearson
+descriptors = c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_LOGPLOW', 'BalabanJ', 'BCUT2D_LOGPHI', 'PEOE_VSA1', 'BCUT2D_CHGLO', 'SMR_VSA6', 'BCUT2D_MRLOW', 'VSA_EState9', 'PEOE_VSA9', 'FractionCSP3', 'PEOE_VSA13', 'SlogP_VSA8', 'SMR_VSA9', 'VSA_EState6', 'SlogP_VSA2', 'EState_VSA8', 'NumRotatableBonds', 'HallKierAlpha', 'PEOE_VSA11', 'Chi0v', 'EState_VSA5', 'Chi0n', 'PEOE_VSA12', 'MolWt', 'SMR_VSA3', 'SlogP_VSA1', 'MinPartialCharge', 'PEOE_VSA8')
+
+descriptors_DC_Ox<-c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'MaxEStateIndex', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_CHGLO',
+       'BCUT2D_LOGPHI', 'BCUT2D_LOGPLOW', 'BCUT2D_MRLOW', 'BalabanJ', 'Chi0v',
+       'Chi2n', 'Chi4n', 'Chi4v', 'HallKierAlpha', 'PEOE_VSA1', 'PEOE_VSA11',
+       'PEOE_VSA13', 'PEOE_VSA9', 'SMR_VSA6', 'SMR_VSA9', 'SlogP_VSA2',
+       'SlogP_VSA8', 'EState_VSA5', 'EState_VSA8', 'VSA_EState6',
+       'VSA_EState9', 'FractionCSP3', 'NumRotatableBonds')
+
+descriptors_spearman_Ox <-c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'BCUT2D_CHGHI', 'BCUT2D_MRLOW', 'PEOE_VSA13', 'BCUT2D_LOGPLOW',
+       'BalabanJ', 'SMR_VSA1', 'PEOE_VSA1', 'PEOE_VSA11', 'BCUT2D_LOGPHI',
+       'MaxPartialCharge', 'SlogP_VSA1', 'BCUT2D_MWLOW', 'EState_VSA5',
+       'SMR_VSA3', 'SMR_VSA6', 'NumRotatableBonds', 'VSA_EState9',
+       'PEOE_VSA12', 'FractionCSP3', 'VSA_EState1', 'SlogP_VSA8', 'fr_NH0',
+       'VSA_EState2', 'PEOE_VSA9', 'SlogP_VSA11', 'PEOE_VSA6',
+       'MaxAbsPartialCharge', 'SMR_VSA9', 'TPSA', 'MinAbsPartialCharge')
+
+descriptors_kendall_Ox <- c('lambda1', 'lambda2', 'lambda_Ox', 'lambda_Red', 'BCUT2D_CHGHI', 'BCUT2D_MRLOW', 'PEOE_VSA13', 'BCUT2D_LOGPLOW',
+       'BalabanJ', 'PEOE_VSA1', 'SMR_VSA1', 'PEOE_VSA11', 'BCUT2D_LOGPHI',
+       'MaxPartialCharge', 'EState_VSA5', 'NumRotatableBonds', 'SMR_VSA6',
+       'SlogP_VSA1', 'VSA_EState9', 'PEOE_VSA12', 'SMR_VSA3', 'BCUT2D_MWLOW',
+       'Chi4n', 'SlogP_VSA8', 'FractionCSP3', 'VSA_EState1', 'fr_NH0',
+       'SlogP_VSA11', 'Chi4v', 'PEOE_VSA9', 'PEOE_VSA6', 'VSA_EState2',
+       'SMR_VSA9', 'MaxAbsPartialCharge')
+```
+
+```{r}
+nombres_columnas <- descriptors_spearman_Ox 
+# Seleccionar las columnas del DataFrame basadas en los nombres de la lista
+datos_Ox <- datos_Ox[, nombres_columnas]
+
+# Visualizar las columnas seleccionadas
+#ndata <- datos
+print(dim(datos_Ox)[2])
+datos_Ox
+```
+
+
+```{r}
+library("Hmisc")
+datos_Ox_matrix <- as.matrix(datos_Ox[,5:ncol(datos_Ox)])
+rcorr(datos_Ox_matrix)
+datos_Ox_matrix <- data.frame(datos_Ox_matrix)
+```
+
+```{r}
+print(dim(datos_Ox)[2])
+KMO(datos_Ox[,5:ncol(datos_Ox)])
+```
+
+```{r}
+datos_Ox_pca <- prcomp(datos_Ox[,5:ncol(datos_Ox)], center = TRUE, scale = TRUE) 
+```
+
+```{r}
+pve <- datos_Ox_pca$sdev^2/sum(datos_Ox_pca$sdev^2)
+plot(cumsum(pve), xlab = "Componente principal", ylab = "Porción acumulada de la varianza explicada", 
+     ylim = c(0,1), type = 'b', col = "royalblue4")
+abline(h = 0.75, lty = 2, col = "red")
+```
+
+
+```{r}
+constante <- 35
+
+plot_3d <- plot_ly(x = datos_Ox_pca$x[, 1], y = datos_Ox_pca$x[, 2], z = datos_Ox_pca$x[, 3], 
+                   type = "scatter3d", mode = "markers",
+                   marker = list(color = "black", size = 3),
+                   text = rownames(datos_pca$x)) %>%
+  layout(scene = list(xaxis = list(title = "PC1"),
+                      yaxis = list(title = "PC2"),
+                      zaxis = list(title = "PC3"),
+                      aspectmode = "cube"),
+         title = "Gráfico de los tres primeros componentes principales (3D)")
+
+# Iterar sobre los descriptores y agregar los vectores correspondientes
+for (i in 1:ncol(loadings)) {
+  plot_3d <- plot_3d %>%
+    add_trace(x = c(0, loadings[i, 1]*constante), 
+              y = c(0, loadings[i, 2]*constante), 
+              z = c(0, loadings[i, 3]*constante),
+              type = "scatter3d",
+              mode = "line",
+              line = list(color = "red", width = 3),
+              name = paste(rownames(loadings)[i], i),
+              marker = list(symbol = "star", color = "red",width = 10))
+}
+
+# Mostrar el gráfico
+plot_3d
+```
+
+Busqueda de los descriptores con mayor relevancias, de acuerdo al # de componentes principales
+```{r}
+ncp <- 10
+print(paste("Numero de componentes principales:",ncp))
+varianza_acumulada <- summary(datos_Ox_pca)$importance[3,][ncp]
+print(paste("Varianza acumulada", varianza_acumulada))
+loadings <- datos_Ox_pca$rotation
+
+lista <- c()
+ntcp <- dim(datos_Ox_pca$rotation)[1]
+info_pesos <- array(NA, dim = c(ntcp, 2))
+j <- 0
+for (i in 1:ntcp){
+  total <- sum(abs(loadings[i, 1:ncp]))
+  des <- names(loadings[,i])[i]
+  #print(paste(des,":",total))
+  lista <- append(lista, total)
+  j = j + total
+  info_pesos[i,1] <- des
+  info_pesos[i,2] <- total
+}
+#print(j)
+#sort(lista, decreasing = TRUE)
+
+indices_ordenados <- order(info_pesos[, 2], decreasing = TRUE)
+
+# Indexar la matriz con los índices ordenados para reordenarla
+info_pesos_ordenada <- info_pesos[indices_ordenados, ]
+
+# Mostrar la matriz ordenada
+print(info_pesos_ordenada)
+```
+
+```{r}
+summary(as.numeric(info_pesos_ordenada[, 2]))
+```
+
+```{r}
+num_umbral<- summary(as.numeric(info_pesos_ordenada[, 2]))[2]
+print(paste("Umbral", num_umbral))
+filas_seleccionadas <- info_pesos_ordenada[info_pesos_ordenada[, 2] > num_umbral, ]
+
+# Imprimir solo el contenido de la primera columna de esas filas
+descriptores_seleccionados <- filas_seleccionadas[, 1]
+
+print(descriptores_seleccionados)
+```
+
+Comparación de los decriptores obtenidos con Analis de correlación y PCA
+```{r}
+descriptores_pca_names <- descriptores_seleccionados
+#Descroptores que se escogieron en el modelo anterior
+descriptores_SRed_pearson <- c('BalabanJ', 'BCUT2D_LOGPLOW', 'BCUT2D_MWLOW', 'BCUT2D_CHGHI','PEOE_VSA1', 'SMR_VSA6', 'VSA_EState9', 'PEOE_VSA9', 'BCUT2D_LOGPHI','FractionCSP3', 'SlogP_VSA4', 'BCUT2D_MRLOW', 'SlogP_VSA2','SlogP_VSA8', 'VSA_EState6')
+
+descriptores_SOx_pearson <- c( 'BCUT2D_MWLOW', 'BCUT2D_CHGHI', 'BCUT2D_LOGPLOW', 'BalabanJ','BCUT2D_LOGPHI', 'PEOE_VSA1', 'BCUT2D_CHGLO', 'SMR_VSA6','BCUT2D_MRLOW', 'VSA_EState9', 'PEOE_VSA9', 'FractionCSP3','PEOE_VSA13', 'SlogP_VSA8', 'SMR_VSA9')
+
+variables_comunes_pca_propio_SOx <- intersect(descriptores_SOx_pearson, descriptores_pca_names)
+variables_comunes_pca_propio_SRed <- intersect(descriptores_SRed_pearson, descriptores_pca_names)
+
+print(variables_comunes_pca_propio_SOx)
+print(length(variables_comunes_pca_propio_SOx))
+
+print(variables_comunes_pca_propio_SRed)
+print(length(variables_comunes_pca_propio_SRed))
+```
+
+```{r}
+datos_reglin <- cbind(datos_Ox[, 4], datos_Ox[, descriptores_seleccionados])# descriptors de PCA con N-CP 
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
+
+```{r}
+datos_reglin <- cbind(datos_Ox[, 4], datos_Ox[,5:ncol(datos_Ox)])# descriptors de PCA con N-CP 
+dim(datos_reglin)
+regresion_lineal_fun(datos_reglin)
+```
